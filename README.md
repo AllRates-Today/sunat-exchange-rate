@@ -1,0 +1,322 @@
+# SUNAT Exchange Rates API — sunat-exchange-rate
+
+[![npm version](https://img.shields.io/npm/v/sunat-exchange-rate.svg)](https://www.npmjs.com/package/sunat-exchange-rate)
+[![license](https://img.shields.io/npm/l/sunat-exchange-rate.svg)](https://github.com/AllRates-Today/sunat-exchange-rate/blob/main/LICENSE)
+[![zero dependencies](https://img.shields.io/badge/dependencies-0-brightgreen.svg)](https://www.npmjs.com/package/sunat-exchange-rate)
+[![TypeScript](https://img.shields.io/badge/TypeScript-types%20included-3178C6.svg)](https://www.typescriptlang.org/)
+[![USD/PEN today](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fallratestoday.com%2Fapi%2Fopen%2Fcentral-bank%2Fsunat%3Fsource%3DUSD%26target%3DPEN&query=%24.rate&label=USD%2FPEN%20published%20by%20SUNAT&color=0A7E8C&cacheSeconds=3600)](https://allratestoday.com/tax-authority-rates-api/sunat/)
+[![rate date](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fallratestoday.com%2Fapi%2Fopen%2Fcentral-bank%2Fsunat%3Fsource%3DUSD%26target%3DPEN&query=%24.rate_date&label=rate%20date&color=555&cacheSeconds=3600)](https://allratestoday.com/tax-authority-rates-api/sunat/)
+
+**Official SUNAT (Peru) daily exchange rates for Node.js and TypeScript. The published tax authority rates behind tax filings, customs valuations, audits, and compliant invoicing — not market estimates, but the numbers SUNAT itself prints, every business day.**
+
+## 🚀 Why this client?
+
+- 🏛️ **Official published rates** — SUNAT's own table, with the publisher's own `rate_date` on every response
+- 📅 **History from 2026** — this source publishes only its current table, so the archive builds forward from the day we started collecting
+- 🔀 **Published vs derived, always flagged** — computed inverse/cross pairs carry `derived: true`, never mixed with official prints
+- ⚡ **Zero dependencies** — pure ESM + CJS over global `fetch`; Node 18+, Bun, Deno, and edge runtimes
+- 🔷 **Type-safe** — full TypeScript definitions shipped with the package
+- 🧾 **Compliance-grade metadata** — `rate_type`, publication date, and source disclaimer on every response
+
+> **Official rate, not mid-market:** every value here is a number SUNAT itself published, fixed once printed and carrying the tax authority's own `rate_date` — what filings and audits require. Need the live mid-market rate for pricing or display instead? Use the [mid-market API](https://allratestoday.com/docs/) or [`@allratestoday/sdk`](https://www.npmjs.com/package/@allratestoday/sdk). The two can diverge by several percent.
+
+## 🔑 Get your API key
+
+Get a free API key at [allratestoday.com/register](https://allratestoday.com/register) — no credit card required. Latest rates are on every plan, including free.
+
+## 📈 Latest published table
+
+[![Latest SUNAT table](https://allratestoday.com/api/open/central-bank/sunat/table.svg)](https://allratestoday.com/tax-authority-rates-api/sunat/)
+
+The image is rendered live from the keyless endpoint, so it follows the tax authority's publications on npm and on GitHub alike without a new release. The same table as text is folded below for search and copy-paste: on GitHub [a daily Action](.github/workflows/daily-table.yml) refreshes it whenever the tax authority publishes a new table; on npm it is as of the package's publish date.
+
+<!-- daily-table:start -->
+<details>
+<summary>Table as text: published 2026-11-06 by SUNAT — 2 rates. Updated 2026-11-06.</summary>
+
+| Base | Quote | Type | Rate |
+| --- | --- | --- | ---: |
+| USD | PEN | buy | 3.446 |
+| USD | PEN | sell | 3.452 |
+
+</details>
+
+Source: [Official rates published by SUNAT, served by AllRatesToday](https://allratestoday.com/tax-authority-rates-api/sunat/). Rates are as printed by the tax authority; AllRatesToday is not affiliated with it.
+<!-- daily-table:end -->
+
+## 📦 Installation
+
+```bash
+npm install sunat-exchange-rate
+```
+
+```bash
+yarn add sunat-exchange-rate
+```
+
+```bash
+pnpm add sunat-exchange-rate
+```
+
+Requires Node 18+ (global `fetch`); also runs on Bun, Deno and edge runtimes. Also published under the org scope as [`@allratestoday/sunat-exchange-rate`](https://www.npmjs.com/package/@allratestoday/sunat-exchange-rate) — same code, same versions.
+
+## 🏁 Quick start
+
+```js
+import { getRate } from 'sunat-exchange-rate';
+
+const pair = await getRate('USD', 'PEN', { apiKey: 'art_live_...' });
+console.log(pair.rate, pair.rate_date); // the official SUNAT rate, on the tax authority's own date
+```
+
+## 📚 API reference
+
+- [Latest pair rate](#latest-pair-rate) — one pair from the latest published table
+- [Full published table](#full-published-table) — everything the tax authority printed, in one call
+- [Table for a date](#table-for-a-date) — the official table for an invoice or filing date
+- [Daily time series](#daily-time-series) — one pair across a date range
+
+---
+
+### Latest pair rate
+
+Free plan and up. Pairs the tax authority does not print directly are resolved from its table and flagged (see *Published vs derived rates* below).
+
+```js
+const pair = await getRate('USD', 'PEN', { apiKey: 'art_live_...' });
+```
+
+**Response:**
+
+```javascript
+{
+  bank: 'sunat',
+  name: 'SUNAT',
+  rate_date: '2026-11-06',   // SUNAT's own publication date
+  source: 'USD',
+  target: 'PEN',
+  rate: 3.452,
+  rate_type: 'sell',
+  derived: false,
+  method: 'published',
+  disclaimer: 'Official rates as published by the named central bank. On weekends/holidays the most recent published rate_date is returned.'
+}
+```
+
+### Full published table
+
+Free plan and up. The complete table for the latest publication date.
+
+```js
+import { getLatestRates } from 'sunat-exchange-rate';
+
+const table = await getLatestRates({ apiKey: 'art_live_...' });
+console.log(table.rate_date, table.rates.length);
+```
+
+**Response:**
+
+```javascript
+{
+  bank: 'sunat',
+  name: 'SUNAT',
+  rate_date: '2026-11-06',
+  rates: [
+    { "base": "USD", "quote": "PEN", "type": "sell", "value": 3.452 },
+    { "base": "USD", "quote": "PEN", "type": "buy", "value": 3.446 },
+    // … the rest of the published table (1 currency vs PEN)
+  ],
+  disclaimer: '…'
+}
+```
+
+### Table for a date
+
+Paid plans. The official table for any date since 2026 — weekends and holidays return the most recent published date, flagged via `published_on_requested_date`, which is exactly the in-force rate a filing needs.
+
+```js
+import { getRatesForDate } from 'sunat-exchange-rate';
+
+const day = await getRatesForDate('2026-06-30', { apiKey: 'art_live_...' });
+// Optionally narrow to one pair:
+const one = await getRatesForDate('2026-06-30', { apiKey: 'art_live_...', source: 'USD', target: 'PEN' });
+```
+
+**Response:**
+
+```javascript
+{
+  bank: 'sunat',
+  requested_date: '2026-06-30',
+  rate_date: '2026-06-30',                // the date actually published
+  published_on_requested_date: true,      // false when a weekend/holiday fell back
+  rates: [ /* the full table for that date */ ],
+  disclaimer: '…'
+}
+```
+
+### Daily time series
+
+Paid plans. One resolved rate per publication date — ready for charting, revaluation runs, or audit workpapers.
+
+```js
+import { getHistory } from 'sunat-exchange-rate';
+
+const series = await getHistory(
+  { source: 'USD', target: 'PEN', from: '2026-01-01', to: '2026-11-06' },
+  { apiKey: 'art_live_...' }
+);
+```
+
+**Response:**
+
+```javascript
+{
+  bank: 'sunat',
+  source: 'USD',
+  target: 'PEN',
+  from: '2026-01-01',
+  to: '2026-11-06',
+  count: 152,
+  rates: [
+    // one entry per publication date
+    { date: '2026-11-06', rate: 3.452, rate_type: 'sell', derived: false, method: 'published' },
+    // …
+  ],
+  disclaimer: '…'
+}
+```
+
+Pass `{ symbol: 'USD' }` instead of `source`/`target` to get the raw published rows for one currency (all rate types, no pair resolution).
+
+---
+
+## 🗺️ Currencies covered
+
+SUNAT currently publishes rates covering **1 currency** against the PEN (as of the latest table):
+
+🇺🇸 `USD`
+
+## 🏛️ Source
+
+SUNAT, Peru's national tax and customs authority, publishes the tipo de cambio oficial every business day: the closing buy and sell rate for the U.S. dollar fixed by the banking regulator SBS on the previous business day. It is the rate Peruvian tax rules require for converting dollar invoices into soles — the buy rate for income and assets, the sell rate for expenses and liabilities — and the rate customs declarations and accounting records cite. The API serves it as USD per soles buy and sell under the date SUNAT publishes it, which is the day the rate applies.
+
+- Publisher's own page: [Tipo de cambio oficial (consulta)](https://e-consulta.sunat.gob.pe/cl-at-ittipcam/tcS01Alias) · [www.sunat.gob.pe](https://www.sunat.gob.pe/)
+- Publication: every business day; the exact schedule, freshness status and any current delay are on the [SUNAT rates page](https://allratestoday.com/tax-authority-rates-api/sunat/)
+- Values are stored unmodified, with the publisher's own `rate_date` on every row — see the [methodology](https://allratestoday.com/official-rates-methodology/)
+
+## 🧭 Reading the numbers
+
+- `value` is always **quote currency per 1 unit of base currency** (`base: "EUR", quote: "USD", value: 1.15` means 1 EUR = 1.15 USD).
+- SUNAT prints **soles per 1 US dollar** (`base: "USD", quote: "PEN"`), one `buy` and one `sell` rate: the tipo de cambio oficial used for Peruvian tax and customs. A table dated D carries the SBS closing rate of the previous business day, stored under the date SUNAT gives it.
+- Need the other way round? Ask `getRate(target, source)` and the API inverts or crosses for you, flagged `derived: true` — never divide a published rate yourself in a compliance workflow.
+- `rate_type` tells you which of the tax authority's series a row belongs to (`sell` here); some publishers print buy/sell or several fixings for the same pair.
+
+## 🧩 ERP & accounting systems
+
+Loading the official SUNAT rate into an accounting system is a supported workflow, not a hack. Step-by-step guides with the direction each system expects:
+
+- [Dynamics 365 Business Central](https://allratestoday.com/docs/integrations/business-central/) — built-in Currency Exchange Rate Service, no code
+- [Xero](https://allratestoday.com/docs/integrations/xero/) · [QuickBooks Online](https://allratestoday.com/docs/integrations/quickbooks/) · [SAP S/4HANA and ECC](https://allratestoday.com/docs/integrations/sap/) · [Odoo](https://allratestoday.com/docs/integrations/odoo/)
+
+The same keyed endpoints return `?format=csv`, `?format=xml` and `?format=xlsx`, and accept the key as `?api_key=` on the URL for importers that cannot send headers:
+
+```bash
+curl "https://allratestoday.com/api/v1/central-bank/sunat/latest?format=xml&api_key=art_live_..."
+```
+
+## 🤖 AI agents
+
+- MCP server: `npx -y @allratestoday/central-bank-mcp` (stdio) or the hosted endpoint `https://allratestoday.com/api/mcp` — tools for official rates, history, cross-bank comparison and publication calendars
+- Already using the general SDK or MCP server? Since 2026-10-01 [`@allratestoday/sdk`](https://www.npmjs.com/package/@allratestoday/sdk) 1.4+ has `officialRates('sunat')` and [`@allratestoday/mcp-server`](https://www.npmjs.com/package/@allratestoday/mcp-server) 0.6+ has a `get_official_rates` tool — both return this source's latest table with no key, so you can add it without a second dependency
+- Claude Code plugin (no key): `/plugin marketplace add AllRates-Today/claude-code-plugin` then `/plugin install allratestoday@allratestoday` — bundles both MCP servers plus an `/official-rate sunat ...` command
+- Evaluating? Agents can self-issue a trial key with no signup: `POST https://allratestoday.com/api/agent/keys` (send `Content-Type: application/json`) returns a 100-call key valid 7 days that covers the free-plan methods (latest table, pairs); dated tables and history need a [paid plan](https://allratestoday.com/pricing/). The MCP servers expose it as `request_trial_key`
+- Machine-readable site guide: [llms.txt](https://allratestoday.com/llms.txt) · [for-ai-agents](https://allratestoday.com/for-ai-agents/)
+
+## ⚖️ Published vs derived rates
+
+If SUNAT does not print a pair directly, the API resolves it from the tax authority's own table and says so — official and computed values are never confused:
+
+| `method` | `derived` | Meaning |
+| --- | --- | --- |
+| `published` | `false` | The tax authority printed this pair directly |
+| `inverse` | `true` | Computed as 1 ÷ the published opposite direction |
+| `cross` | `true` | Computed via PEN from two published rates |
+
+## 🛡️ Error handling
+
+Errors are thrown as `Error` with `status` (HTTP code) and `body` (the API's JSON error) attached:
+
+```js
+try {
+  const pair = await getRate('USD', 'XXX', { apiKey: 'art_live_...' });
+} catch (err) {
+  console.log(err.message); // human-readable reason
+  console.log(err.status);  // e.g. 404
+}
+```
+
+| Status | Meaning |
+| ------ | ------- |
+| — | Missing `apiKey` (thrown before any request) |
+| `400` | Malformed date or parameters |
+| `401` | Invalid API key |
+| `403` | Endpoint needs a [paid plan](https://allratestoday.com/pricing/) (historical dates & series) |
+| `404` | Pair or date range not covered by SUNAT |
+| `429` | Monthly quota exceeded |
+
+## 🔷 TypeScript
+
+Full definitions ship with the package — no `@types` install:
+
+```ts
+import type { LatestRates, PairRate, DatedRates, RateEntry, HistoryQuery, RequestOptions } from 'sunat-exchange-rate';
+```
+
+## 📦 CommonJS
+
+```javascript
+const { getRate } = require('sunat-exchange-rate');
+
+getRate('USD', 'PEN', { apiKey: 'art_live_...' }).then((pair) => console.log(pair.rate));
+```
+
+## 💡 Quota tips
+
+- Rates change once per business day — cache the published table locally and a small monthly quota goes a long way.
+- Every request counts toward your AllRatesToday quota, shared across all AllRatesToday endpoints on your key.
+
+## 📖 Methods reference
+
+| Method | Plan | Description |
+| ------ | ---- | ----------- |
+| `getRate(source, target, { apiKey })` | Free | Latest rate for one pair, resolved from the published table |
+| `getLatestRates({ apiKey })` | Free | The tax authority's full latest published table |
+| `getRatesForDate(date, { apiKey, source?, target? })` | Paid | The official table (or one pair) for a YYYY-MM-DD date |
+| `getHistory({ symbol \| source+target, from?, to? }, { apiKey })` | Paid | Daily series since 2026 |
+
+## 📥 Bulk data (no key)
+
+Need the whole archive rather than an API call? The same published tables are mirrored daily as open data:
+
+- Hugging Face: [AllRatesToday/central-bank-exchange-rates](https://huggingface.co/datasets/AllRatesToday/central-bank-exchange-rates) — one CSV per institution (`rates/sunat.csv`)
+- Kaggle: [allratestoday/central-bank-exchange-rates](https://www.kaggle.com/datasets/allratestoday/central-bank-exchange-rates)
+- Raw JSON on GitHub: `https://raw.githubusercontent.com/AllRates-Today/central-bank-exchange-rates/main/data/sunat/latest.json`
+
+## 🔗 Links
+
+- **Website:** [allratestoday.com](https://allratestoday.com)
+- [SUNAT rates page](https://allratestoday.com/tax-authority-rates-api/sunat/) — live table, publication cadence, FAQ
+- [All tax authority sources](https://allratestoday.com/tax-authority-rates-api/)
+- [Download central bank rates](https://allratestoday.com/download-central-bank-rates/) — every bank's latest table and history as Excel, CSV or JSON
+- [Package docs on the site](https://allratestoday.com/docs/sdk/sunat-exchange-rate/) · [ERP integration guides](https://allratestoday.com/docs/integrations/)
+- [API documentation](https://allratestoday.com/docs/#central-bank) · [Interactive reference](https://allratestoday.com/api-reference/) · [Methodology](https://allratestoday.com/official-rates-methodology/)
+- [Register (Free)](https://allratestoday.com/register) · [Dashboard](https://allratestoday.com/profile) · [Pricing](https://allratestoday.com/pricing/)
+- [Status](https://allratestoday.com/status)
+- [Postman collection](https://allratestoday.com/postman/)
+- [ChatGPT app](https://chatgpt.com/plugins/plugin_asdk_app_6ae1e76098f48191a285ac3f5ab7a83b) — ask ChatGPT for live and official central bank rates
+- [GitHub](https://github.com/AllRates-Today/sunat-exchange-rate)
+
+## 📜 License
+
+MIT
