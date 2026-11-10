@@ -32,12 +32,12 @@ The image is rendered live from the keyless endpoint, so it follows the tax auth
 
 <!-- daily-table:start -->
 <details>
-<summary>Table as text: published 2026-11-09 by SUNAT — 2 rates. Updated 2026-11-09.</summary>
+<summary>Table as text: published 2026-11-10 by SUNAT — 2 rates. Updated 2026-11-10.</summary>
 
 | Base | Quote | Type | Rate |
 | --- | --- | --- | ---: |
-| USD | PEN | buy | 3.427 |
-| USD | PEN | sell | 3.433 |
+| USD | PEN | buy | 3.409 |
+| USD | PEN | sell | 3.418 |
 
 </details>
 
